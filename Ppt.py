@@ -3,12 +3,8 @@ import pandas as pd
 import io
 import openai
 from pptx import Presentation
-from pptx.util import Inches, Pt
-from pptx.enum.text import PP_ALIGN
-from pptx.dml.color import RGBColor
 import os
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_classic.chains import LLMChain
 from langchain_classic.prompts import PromptTemplate
 import tempfile
@@ -54,19 +50,8 @@ except Exception as e:
     st.sidebar.error(f"❌ Invalid Groq API key: {str(e)}")
     st.stop()
 
-# Initialize Hugging Face embeddings
-try:
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
-        model_kwargs={'device': 'cpu'}
-    )
-    st.sidebar.success("✅ Hugging Face embeddings loaded!")
-except Exception as e:
-    st.sidebar.error(f"❌ Error loading embeddings: {str(e)}")
-    st.stop()
-
 # Main Content Area
-tab1, tab2, tab3 = st.tabs(["📝 Text to PPT", "📊 Data to PPT", "⚙️ Advanced Settings"])
+tab1, tab2 = st.tabs(["📝 Text to PPT", "📊 Data to PPT"])
 
 def create_presentation_from_structure(topic, audience, slides_count, tone, additional_context):
     """Create PowerPoint presentation using AI-generated structure"""
@@ -127,7 +112,7 @@ def create_presentation_from_structure(topic, audience, slides_count, tone, addi
     return ppt_structure
 
 def parse_slide_structure(ppt_structure):
-    """Parse the AI-generated structure into slide components - FIXED VERSION"""
+    """Parse the AI-generated structure into slide components"""
     slides = []
     
     # Split by lines and look for SLIDE patterns
@@ -142,16 +127,9 @@ def parse_slide_structure(ppt_structure):
             if slide_match:
                 slide_content = slide_match.group(2).strip()
                 slides.append(slide_content)
-        
-        # Also check for numbered slides without "SLIDE" prefix
-        elif re.match(r'^\d+\.', line) or re.match(r'^\d+\)', line):
-            slide_content = re.sub(r'^\d+[\.\)]\s*', '', line).strip()
-            if slide_content:
-                slides.append(slide_content)
     
     # If no structured slides found, try to extract any meaningful content
     if not slides:
-        st.warning("⚠️ Using fallback parsing method...")
         # Try to split by common slide indicators
         potential_slides = re.split(r'\n\s*\n|\d+\.\s|\d+\)\s|SLIDE\s+\d+:', ppt_structure)
         for potential_slide in potential_slides:
@@ -162,13 +140,11 @@ def parse_slide_structure(ppt_structure):
     return slides
 
 def create_ppt_file(slides_data, topic, audience):
-    """Create actual PowerPoint file from slide data - IMPROVED VERSION"""
+    """Create actual PowerPoint file from slide data"""
     prs = Presentation()
     
     # If no slides were parsed, create a default presentation
     if not slides_data:
-        st.warning("⚠️ No slides parsed. Creating default presentation structure.")
-        
         # Title slide
         title_slide_layout = prs.slide_layouts[0]
         slide = prs.slides.add_slide(title_slide_layout)
@@ -293,7 +269,7 @@ with tab1:
                         )
                     
                     with col2:
-                        st.info(f"**Generated {actual_slides_count} slides** using Groq LLM and Hugging Face embeddings")
+                        st.info(f"**Generated {actual_slides_count} slides** using Groq LLM")
                     
                     # Show generated content
                     with st.expander("📋 View AI-Generated Content"):
@@ -309,10 +285,6 @@ with tab1:
                             
                 except Exception as e:
                     st.error(f"Error generating presentation: {str(e)}")
-                    import traceback
-                    st.code(traceback.format_exc())
-
-# ... (rest of the code remains the same for tab2 and tab3)
 
 with tab2:
     st.header("Generate PPT from Data")
@@ -404,30 +376,6 @@ with tab2:
             if os.path.exists(tmp_file_path):
                 os.unlink(tmp_file_path)
 
-with tab3:
-    st.header("Advanced Settings")
-    
-    st.subheader("Presentation Template")
-    template_choice = st.selectbox("Choose Template:", 
-                                 ["Corporate Blue", "Modern Red", "Professional Green", "Creative Purple"])
-    
-    st.subheader("AI Model Settings")
-    st.info(f"Current Model: Groq - openai/gpt-oss-120b")
-    st.info(f"Embeddings: Hugging Face - sentence-transformers/all-MiniLM-L6-v2")
-    
-    st.subheader("Content Options")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        include_agenda = st.checkbox("Include Agenda Slide", value=True)
-        include_summary = st.checkbox("Include Summary Slide", value=True)
-        include_qa = st.checkbox("Include Q&A Slide", value=True)
-    
-    with col2:
-        add_speaker_notes = st.checkbox("Add Speaker Notes", value=False)
-        add_references = st.checkbox("Add References Slide", value=False)
-        detailed_bullets = st.checkbox("Detailed Bullet Points", value=True)
-
 # Instructions Section
 with st.expander("📖 How to Use This Tool"):
     st.markdown("""
@@ -443,7 +391,6 @@ with st.expander("📖 How to Use This Tool"):
     
     ### Technical Stack:
     - **LLM**: Groq (openai/gpt-oss-120b) for content generation
-    - **Embeddings**: Hugging Face (sentence-transformers/all-MiniLM-L6-v2)
     - **Framework**: LangChain for orchestration
     - **UI**: Streamlit for web interface
     - **PPT Generation**: python-pptx library
@@ -451,15 +398,13 @@ with st.expander("📖 How to Use This Tool"):
     ### Features:
     - AI-powered content generation using Groq LLM
     - Professional PowerPoint formatting
-    - Data analysis and visualization recommendations
-    - Multiple template options
-    - Enterprise-ready presentation output
+    - Data analysis and basic statistics
+    - Multiple input methods (text and data)
     """)
 
 # Footer
 st.markdown("---")
 st.markdown(
-    "🔒 Built with Groq LLM & Hugging Face Embeddings | " +
-    "Powered by LangChain & Streamlit",
+    "🔒 Built with Groq LLM | Powered by LangChain & Streamlit",
     unsafe_allow_html=True
 )

@@ -1,0 +1,8 @@
+streamlit
+pandas
+openpyxl
+python-pptx
+langchain-groq
+langchain-huggingface
+sentence-transformers
+torch

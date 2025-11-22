@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import io
+import openai
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
@@ -8,8 +9,8 @@ from pptx.dml.color import RGBColor
 import os
 from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
+from langchain_classic.chains import LLMChain
+from langchain_classic.prompts import PromptTemplate
 import tempfile
 import re
 
